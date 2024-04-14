@@ -1,83 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:sms_otp_auto_verify/sms_otp_auto_verify.dart';
+import 'package:otp_text_field/otp_field.dart';
+import 'package:otp_text_field/otp_field_style.dart';
+import 'package:otp_text_field/style.dart';
+import 'package:sms_consent_for_otp_autofill/sms_consent_for_otp_autofill.dart';
 
-class VeryficationScreen extends StatefulWidget {
+class VerificationScreen extends StatefulWidget {
   @override
-  _VeryficationScreenState createState() => _VeryficationScreenState();
+  _VerificationScreenState createState() => _VerificationScreenState();
 }
 
-class _VeryficationScreenState extends State<VeryficationScreen> {
-  int _otpCodeLength = 4;
-  String _otpCode = "";
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final intRegex = RegExp(r'\d+', multiLine: true);
-  TextEditingController otpController = new TextEditingController(text: "");
+class _VerificationScreenState extends State<VerificationScreen> {
+  late SmsConsentForOtpAutofill smsConsentForOtpAutoFill;
+  OtpFieldController otpController = OtpFieldController();
+  String? phoneNumber;
 
   @override
   void initState() {
     super.initState();
-    _getSignatureCode();
-    _startListeningSms();
+    // Initialize smsConsentForOtpAutoFill
+    smsConsentForOtpAutoFill = SmsConsentForOtpAutofill(
+      phoneNumberListener: (number) {
+        setState(() {
+          phoneNumber = number;
+        });
+        print("Received phone number: $number");
+      },
+      smsListener: (otpCode) {
+        otpController.clear();
+        String? extractedCode = getCode(otpCode);
+        if (extractedCode != null) {
+          List<String> codeDigits = extractedCode.split('');
+          otpController.set(codeDigits);
+        } else {
+          // Handle case where OTP extraction failed
+          print("Failed to extract OTP from SMS: $otpCode");
+        }
+      },
+    );
+    // Request SMS consent
+    smsConsentForOtpAutoFill.requestSms();
   }
 
   @override
   void dispose() {
+    smsConsentForOtpAutoFill.dispose();
     super.dispose();
-    SmsVerification.stopListening();
   }
 
-  /// get signature code
-  _getSignatureCode() async {
-    String? signature = await SmsVerification.getAppSignature();
-    print("signature $signature");
-  }
-
-  /// listen sms
-  _startListeningSms() {
-    SmsVerification.startListeningSms().then((message) {
-      setState(() {
-        _otpCode = SmsVerification.getCode(message, intRegex);
-        otpController.text = _otpCode;
-      });
-    });
+  String? getCode(String? sms) {
+    if (sms != null) {
+      final codeRegex = RegExp(r'\b\d{5}\b'); // Assuming OTP is 5 digits
+      final match = codeRegex.firstMatch(sms);
+      if (match != null) {
+        return match.group(0);
+      }
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      body: Container(
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextFieldPin(
-                    textController: otpController,
-                    autoFocus: true,
-                    codeLength: _otpCodeLength,
-                    alignment: MainAxisAlignment.center,
-                    defaultBoxSize: 55,
-                    margin: 10,
-                    selectedBoxSize: 55,
-                    textStyle: const TextStyle(fontSize: 16),
-                    defaultDecoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(15.0),
-                    ).copyWith(
-                        border:
-                            Border.all(color: Colors.black.withOpacity(0.6))),
-                    selectedDecoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    onChange: (code) {}),
-              ],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            const Center(
+              child: Text(
+                "code was sent to the number 09905891724",
+                style: TextStyle(fontSize: 18),
+              ),
             ),
-          ),
+            const Padding(padding: EdgeInsets.all(20)),
+            OTPTextField(
+              keyboardType: TextInputType.phone,
+              controller: otpController,
+              length: 5,
+              width: double.infinity,
+              fieldWidth: 50,
+              style: const TextStyle(fontSize: 17),
+              otpFieldStyle: OtpFieldStyle(
+                borderColor: Colors.white,
+                enabledBorderColor: Colors.white,
+                focusBorderColor: Colors.white,
+              ),
+              textFieldAlignment: MainAxisAlignment.spaceAround,
+              fieldStyle: FieldStyle.box,
+              onCompleted: (pin) {
+                smsConsentForOtpAutoFill.requestSms();
+              },
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue,
+                  minimumSize: const Size(200, 50),
+                ),
+                onPressed: () {},
+                child: Text(
+                  'Confirm',
+                  style: TextStyle(fontSize: 24, color: Colors.white),
+                )),
+          ],
         ),
       ),
     );
