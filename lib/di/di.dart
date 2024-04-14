@@ -5,7 +5,7 @@ import 'package:v2ray/repository/authentication_repository.dart';
 
 final locator = GetIt.instance;
 
-Future<void> getItInit() async{
+Future<void> getItInit() async {
   locator.registerSingleton<Dio>(Dio());
 
   locator
