@@ -15,10 +15,6 @@ class AuthLoadingState extends AuthState {
 }
 
 class AuthResponseState extends AuthState {
-  String message;
-
-  AuthResponseState({required this.message});
-
   @override
   List<Object?> get props => [];
 }
