@@ -1,13 +1,14 @@
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'package:rolling_switch/rolling_switch.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key, required this.serverConfig});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+  final List<String> serverConfig;
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -58,110 +59,130 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: v2rayStatus,
-      builder: (context, value, child) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                  top: 12, bottom: 120, left: 16, right: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Spacer(),
-                  const Text(
-                    'RahaVpn',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'RahaVpn',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        actions: const [
+          Icon(Icons.settings, size: 35),
+          SizedBox(width: 10),
+        ],
+      ),
+      body: SafeArea(
+        child: ValueListenableBuilder(
+          valueListenable: v2rayStatus,
+          builder: (context, value, child) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 100),
+                RollingSwitch.icon(
+                  width: 180,
+                  height: 60,
+                  onChanged: (bool state) {
+                    if (isConnect) {
+                      flutterV2ray.stopV2Ray();
+                    } else {
+                      onConnect();
+                    }
+                  },
+                  rollingInfoRight: RollingIconInfo(
+                    text: Text(value.state),
                   ),
-                  SizedBox(width: MediaQuery.of(context).size.width / 4 - 10),
-                  const Icon(Icons.settings, size: 35),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                if (isConnect) {
-                  flutterV2ray.stopV2Ray();
-                } else {
-                  onConnect();
-                }
-              },
-              child: AvatarGlow(
-                child: Material(
-                  elevation: 2.0,
-                  shape: const CircleBorder(),
-                  child: CircleAvatar(
-                    backgroundColor:
-                        isConnect ? Colors.green[500] : Colors.red[700],
-                    radius: 70.0,
-                    child: Text(value.state),
+                  rollingInfoLeft: RollingIconInfo(
+                    backgroundColor: Colors.grey,
+                    text: Text(value.state),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 75),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Time : '),
-                const SizedBox(width: 10), // Adding vertical space
-                Text(value.duration),
+                const SizedBox(height: 75),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Time : '),
+                    const SizedBox(width: 10), // Adding vertical space
+                    Text(value.duration),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Speed:'),
+                    const SizedBox(width: 10),
+                    Text(value.uploadSpeed),
+                    const Text('↑'),
+                    const SizedBox(width: 10),
+                    Text(value.downloadSpeed),
+                    const Text('↓'),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Traffic:'),
+                    const SizedBox(width: 10),
+                    Text(value.upload),
+                    const Text('↑'),
+                    const SizedBox(width: 10),
+                    Text(value.download),
+                    const Text('↓'),
+                  ],
+                ),
+                const Spacer(),
+                _buildBottomAppbar(widget.serverConfig),
               ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Speed:'),
-                const SizedBox(width: 10),
-                Text(value.uploadSpeed),
-                const Text('↑'),
-                const SizedBox(width: 10),
-                Text(value.downloadSpeed),
-                const Text('↓'),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Traffic:'),
-                const SizedBox(width: 10),
-                Text(value.upload),
-                const Text('↑'),
-                const SizedBox(width: 10),
-                Text(value.download),
-                const Text('↓'),
-              ],
-            ),
-            const Spacer(),
-            _buildBottomAppbar(),
-          ],
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
-  Widget _buildBottomAppbar() {
+  Widget _buildBottomAppbar(List<String> serversConfig) {
     return InkWell(
       onTap: () {
-        showBottomSheet(
+        showModalBottomSheet(
           context: context,
           backgroundColor: Colors.transparent,
+          isScrollControlled: true,
           builder: (context) => DraggableScrollableSheet(
             initialChildSize: 0.5,
-            maxChildSize: 1,
+            maxChildSize: 0.7,
             builder: (context, scrollController) => Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
+              decoration: const BoxDecoration(
+                color: Colors.black45,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
               ),
-              child: Text('d'),
+              child: ListView.builder(
+                controller: scrollController,
+                cacheExtent: 20,
+                itemCount: serversConfig.length,
+                itemBuilder: (context, index) => Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  height: 80,
+                  decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(serversConfig[index].toString()),
+                        const Icon(Icons.settings_input_antenna),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         );
