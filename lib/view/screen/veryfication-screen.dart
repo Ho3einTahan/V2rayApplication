@@ -69,8 +69,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
           children: <Widget>[
             const Center(
               child: Text(
-                "code was sent to the number 09905891724",
-                style: TextStyle(fontSize: 18),
+                "code was sent to the 09905891724",
+                style: TextStyle(fontSize: 20),
               ),
             ),
             const Padding(padding: EdgeInsets.all(20)),
