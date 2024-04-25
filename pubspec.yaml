@@ -16,6 +16,7 @@ dependencies:
   flutter_v2ray: ^1.0.7
   dio: ^5.4.2+1
   dartz: ^0.10.1
+  country_flags: ^2.2.0
   get_it: ^7.6.4
   get: ^4.6.6
   bloc: ^8.1.4
