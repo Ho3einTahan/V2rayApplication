@@ -29,7 +29,8 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 34),
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 100, bottom: 34),
               child: TextField(
                 controller: phoneNumberController,
                 decoration: InputDecoration(
