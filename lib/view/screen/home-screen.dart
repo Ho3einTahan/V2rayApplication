@@ -1,3 +1,4 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
@@ -143,6 +144,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomAppbar(List<String> serversConfig) {
+    const List<Map<String, String>> _countryNames = [
+      {'am': 'ارمنستان'},
+      {'aw': 'آروبا'},
+      {'au': 'استرالیا'},
+      {'at': 'اتریش'},
+      {'az': 'جمهوری آذربایجان'},
+      {'bs': 'باهاما'},
+      {'bh': 'بحرین'},
+      {'bd': 'بنگلادش'},
+      {'bb': 'باربادوس'},
+      {'by': 'بلاروس'},
+      {'be': 'بلژیک'},
+      {'bz': 'بلیز'},
+      {'bj': 'بنین'},
+      {'bm': 'برمودا'},
+      {'bt': 'بوتان'},
+      {'bo': 'بولیوی'},
+      {'bq': 'بونیر، سنت اوستاتیوس و سبا'},
+      {'ba': 'بوسنی و هرزگوین'},
+      {'bw': 'بوتسوانا'},
+      {'bv': 'جزیره بووه'},
+    ];
+
     return InkWell(
       onTap: () {
         showModalBottomSheet(
@@ -176,8 +200,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(serversConfig[index].toString()),
-                        const Icon(Icons.settings_input_antenna),
+                        CountryFlag.fromCountryCode(
+                          _countryNames[index].keys.first,
+                          height: 48,
+                          width: 62,
+                          borderRadius: 5,
+                        ),
+                        Text(
+                          _countryNames[index].values.first,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
