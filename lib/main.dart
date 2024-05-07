@@ -7,10 +7,13 @@ import 'package:v2ray/bloc/auth/auth_bloc.dart';
 import 'package:v2ray/view/screen/home-screen.dart';
 import 'package:v2ray/view/screen/login-screen.dart';
 import 'package:v2ray/view/screen/veryfication-screen.dart';
+import 'core/class/model/MyPrefrences.dart';
 import 'di/di.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await getItInit();
+  MyPreferences.initPrefrences();
   runApp(BlocProvider<AuthBloc>(
     create: (context) => AuthBloc(),
     child: const MyApp(),
@@ -22,7 +25,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp (
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -31,7 +34,17 @@ class MyApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      home: Scaffold(body: LoginScreen()),
+      home: Scaffold(
+          body: FutureBuilder<bool>(
+        future: MyPreferences.readUserIsLogin(),
+        builder: (context, snapshot) {
+          if (snapshot.data == false) {
+            return LoginScreen();
+          } else {
+            return HomeScreen(serverConfig: const []);
+          }
+        },
+      ),),
     );
   }
 }
