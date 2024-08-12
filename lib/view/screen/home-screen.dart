@@ -1,15 +1,17 @@
+import 'package:badges/badges.dart' as badges;
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 import 'package:v2ray/core/class/model/MyPrefrences.dart';
 
 import '../../bloc/auth/auth_bloc.dart';
 import '../../core/function/get-imei.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({super.key, required this.serverConfig});
+  const HomeScreen({super.key, required this.serverConfig});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -109,115 +111,152 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: ValueListenableBuilder(
-          valueListenable: v2rayStatus,
-          builder: (context, value, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(height: 32),
-                const Wrap(
-                  spacing: 2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  direction: Axis.vertical,
-                  children: [
-                    Text(
-                      'Welcome to',
-                      style: TextStyle(fontSize: 26),
-                    ),
-                    Text(
-                      'Raha VPn',
-                      style: TextStyle(color: Color(0xff396AFC), fontSize: 24),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 42),
-                _buildChooseSeverConfig(),
-                const SizedBox(height: 42),
-                GestureDetector(
-                  onTap: () {
-                    if (value.state == 'CONNECTED') {
-                      flutterV2ray.stopV2Ray();
-                    } else {
-                      onConnect();
-                    }
-                    setState(() {});
-                  },
-                  child: Container(
-                    width: 150,
-                    height: 150,
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.bottomCenter, colors: [Color(0xff146B84), Color(0xff000046)]),
+          ),
+          child: ValueListenableBuilder(
+            valueListenable: v2rayStatus,
+            builder: (context, value, child) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 35),
+                  Container(
+                    width: double.infinity,
+                    height: 70,
+                    margin: const EdgeInsets.symmetric(horizontal: 31),
                     decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xff3D83FF),
-                          width: 5,
-                        ),
-                        borderRadius: BorderRadius.circular(75)),
-                    child: Center(
-                        child: value.state == 'CONNECTED'
-                            ? Image.asset('images/tap-disconnect.png')
-                            : Image.asset('images/tap-connect.png')),
-                  ),
-                ),
-                const SizedBox(height: 100),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Status : ',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        )),
-                    Text(
-                      ' ${v2rayStatus.value.state} ',
-                      style: TextStyle(
-                        color: v2rayStatus.value.state == 'CONNECTED'
-                            ? Colors.green
-                            : Colors.red,
-                        fontSize: 18,
-                      ),
+                      color: const Color(0xff1D192B),
+                      borderRadius: BorderRadius.circular(20),
+                      border: const GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Time : '),
-                    const SizedBox(width: 10), // Adding vertical space
-                    Text(value.duration),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Speed:'),
-                    const SizedBox(width: 10),
-                    Text(value.uploadSpeed),
-                    const Text('↑'),
-                    const SizedBox(width: 10),
-                    Text(value.downloadSpeed),
-                    const Text('↓'),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Traffic:'),
-                    const SizedBox(width: 10),
-                    Text(value.upload),
-                    const Text('↑'),
-                    const SizedBox(width: 10),
-                    Text(value.download),
-                    const Text('↓'),
-                  ],
-                ),
-                // const Spacer(),
-                // _buildChooseSeverConfig(widget.serverConfig),
-              ],
-            );
-          },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(onPressed: () {}, icon: const Icon(Icons.clean_hands_sharp, size: 35, color: Colors.white)),
+                        Image.asset('images/profile.png'),
+                        const badges.Badge(
+                          badgeContent: Text('3'),
+                          child: Icon(Icons.notifications, size: 35),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  Container(
+                    width: double.infinity,
+                    height: 100,
+                    margin: const EdgeInsets.symmetric(horizontal: 31),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: const GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
+                    ),
+                    child: Center(
+                        child: Text(
+                      '25 درصد تخفیف ویژه فقط برای امروز',
+                      style: TextStyle(color: Colors.black, fontSize: 20),
+                    )),
+                  ),
+
+                  // const SizedBox(height: 20),
+                  // const SizedBox(height: 20),
+                  // _buildChooseSeverConfig(),
+                  // const SizedBox(height: 20),
+                  const SizedBox(height: 70),
+                  Container(
+                    width: 175,
+                    height: 175,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xff1D192B),
+                      border: GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
+                    ),
+                    child: const Center(child: Icon(Icons.power_settings_new_rounded, size: 70)),
+                  ),
+
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     if (value.state == 'CONNECTED') {
+                  //       flutterV2ray.stopV2Ray();
+                  //     } else {
+                  //       onConnect();
+                  //     }
+                  //     setState(() {});
+                  //   },
+                  //   child: Container(
+                  //     width: 150,
+                  //     height: 150,
+                  //     decoration: BoxDecoration(
+                  //         border: Border.all(
+                  //           color: const Color(0xff3D83FF),
+                  //           width: 5,
+                  //         ),
+                  //         borderRadius: BorderRadius.circular(75)),
+                  //     child: Center(child: value.state == 'CONNECTED' ? Image.asset('images/tap-disconnect.png') : Image.asset('images/tap-connect.png')),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 100),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     const Text('Status : ',
+                  //         style: TextStyle(
+                  //           fontSize: 18,
+                  //           fontWeight: FontWeight.w800,
+                  //         )),
+                  //     Text(
+                  //       ' ${v2rayStatus.value.state} ',
+                  //       style: TextStyle(
+                  //         color: v2rayStatus.value.state == 'CONNECTED' ? Colors.green : Colors.red,
+                  //         fontSize: 18,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 32),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     const Text('Time : '),
+                  //     const SizedBox(width: 10), // Adding vertical space
+                  //     Text(value.duration),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 24),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     const Text('Speed:'),
+                  //     const SizedBox(width: 10),
+                  //     Text(value.uploadSpeed),
+                  //     const Text('↑'),
+                  //     const SizedBox(width: 10),
+                  //     Text(value.downloadSpeed),
+                  //     const Text('↓'),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 24),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     const Text('Traffic:'),
+                  //     const SizedBox(width: 10),
+                  //     Text(value.upload),
+                  //     const Text('↑'),
+                  //     const SizedBox(width: 10),
+                  //     Text(value.download),
+                  //     const Text('↓'),
+                  //   ],
+                  // ),
+                  // // const Spacer(),
+                  // _buildChooseSeverConfig(widget.serverConfig),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -261,25 +300,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: widget.serverConfig.length,
                       itemBuilder: (context, index) {
                         return Container(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           height: 80,
-                          decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(16)),
+                          decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: InkWell(
                               onTap: () {
                                 link = widget.serverConfig[index].trim();
-                                selectedServerConfig =
-                                    _countryNames[index].keys.first;
+                                selectedServerConfig = _countryNames[index].keys.first;
                                 setState(() {});
                                 Navigator.pop(context);
                               },
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   CountryFlag.fromCountryCode(
                                     _countryNames[index].keys.first,
