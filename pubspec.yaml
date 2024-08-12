@@ -7,7 +7,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.1.5 <4.0.0'
+  sdk: '>=3.1.1 <4.0.0'
 
 
 dependencies:
@@ -16,8 +16,10 @@ dependencies:
   flutter_v2ray: ^1.0.7
   dio: ^5.4.2+1
   dartz: ^0.10.1
+  gradient_borders: ^1.0.1
   shared_preferences: ^2.2.3
   country_flags: ^2.2.0
+  badges: ^3.1.2
   get_it: ^7.6.4
   get: ^4.6.6
   bloc: ^8.1.4
