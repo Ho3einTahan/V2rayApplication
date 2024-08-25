@@ -9,6 +9,7 @@ import 'package:v2ray/core/class/model/MyPrefrences.dart';
 
 import '../../bloc/auth/auth_bloc.dart';
 import '../../core/function/get-imei.dart';
+import '../widget/custom-gradient.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.serverConfig});
@@ -160,22 +161,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(color: Colors.black, fontSize: 20),
                     )),
                   ),
-
+                  _buildConnectStatus(),
                   // const SizedBox(height: 20),
                   // const SizedBox(height: 20),
                   // _buildChooseSeverConfig(),
                   // const SizedBox(height: 20),
-                  const SizedBox(height: 70),
-                  Container(
-                    width: 175,
-                    height: 175,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xff1D192B),
-                      border: GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
-                    ),
-                    child: const Center(child: Icon(Icons.power_settings_new_rounded, size: 70)),
-                  ),
 
                   // GestureDetector(
                   //   onTap: () {
@@ -370,6 +360,65 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildConnectButton() {
+    return Column(
+      children: [
+        const SizedBox(height: 70),
+        Container(
+          width: 175,
+          height: 175,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xff1D192B),
+            border: GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
+          ),
+          child: const Center(child: Icon(Icons.power_settings_new_rounded, size: 70)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConnectStatus() {
+    return Container(
+      width: 360,
+      height: 350,
+      margin: const EdgeInsets.symmetric(horizontal: 21, vertical: 21),
+      padding: const EdgeInsets.only(right: 32),
+      decoration: const BoxDecoration(
+        color: Color(0xff1D192B),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(71),
+          bottomRight: Radius.circular(71),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        textDirection: TextDirection.rtl,
+        children: [
+          Center(
+            child: CustomGradient(
+              firstColor: const Color(0xff11998E),
+              secondColor: const Color(0xff38EF7D),
+              child: const Text('CONNECTED', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          Text('آدرس آیپی : 192.168.1.100'),
+          Text('سرعت دانلود : 1300MB'),
+          Text('سرعت آپلود : 1300MB'),
+          Text('حجم مصرف شده : 13565923015MB'),
+          Text('زمان : 13:20:12'),
+          Center(
+              child: CustomGradient(
+            firstColor: const Color(0xff38EF7D),
+            secondColor: const Color(0xff11998E),
+            child: const Icon(Icons.power_settings_new_rounded, size: 70),
+          )),
+        ],
       ),
     );
   }
