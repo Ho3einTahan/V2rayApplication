@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widget/custom-divider.dart';
+
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
 
@@ -15,9 +17,9 @@ class NotificationScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildDivider(),
-                  Text('اطلاع رسانی ...', style: TextStyle(color: Colors.white)),
-                  _buildDivider(),
+                  customDivider(),
+                 const Text('اطلاع رسانی ...', style: TextStyle(color: Colors.white)),
+                  customDivider(),
                 ],
               ),
             ),
@@ -37,21 +39,34 @@ Widget _buildBanner() {
       borderRadius: BorderRadius.circular(4),
       color: const Color(0xff454545),
     ),
-    child: Column(
+    child: Row(
+      textDirection: TextDirection.rtl,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisSize: MainAxisSize.max,
       children: [
-        Row(
-          textDirection: TextDirection.rtl,
+        Image.asset('images/banner.png', height: 70),
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Row(
+              textDirection: TextDirection.rtl,
               children: [
-                Image.asset('images/banner.png', height: 70),
+                const Text('تخفیف 10 درصدی اولین ورود'),
+                const SizedBox(width: 10),
+                _buildPromoBadge(),
               ],
             ),
-            Text('تخفیف 10 درصدی اولین ورود'),
-            _buildPromoBadge(),
+            Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                _buildCopyButton(),
+                const SizedBox(width: 10),
+                const Text('رایگان', style: TextStyle(color: Colors.white, fontSize: 20)),
+                const SizedBox(width: 10),
+                const Icon(Icons.currency_pound_rounded, color: Colors.yellow),
+              ],
+            ),
           ],
         ),
       ],
@@ -59,21 +74,12 @@ Widget _buildBanner() {
   );
 }
 
-Widget _buildDivider() {
-  return const Expanded(
-    child: Divider(
-      indent: 20, // فاصله از متن
-      thickness: 2, // ضخامت خط
-      endIndent: 20,
-      color: Colors.white, // رنگ خط
-    ),
-  );
-}
+
 
 Widget _buildPromoBadge() {
   return Container(
     width: 41,
-    height: 20 ,
+    height: 20,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(18),
       gradient: const LinearGradient(colors: [Color(0xff03DAC5), Color(0xffFFCE22)]),
@@ -84,5 +90,22 @@ Widget _buildPromoBadge() {
 }
 
 Widget _buildCopyButton() {
-  return Container(child: const Center(child: Icon(Icons.paste_outlined)));
+  return Container(
+      width: 174,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: const Row(
+        textDirection: TextDirection.rtl,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const Center(
+              child: Icon(
+            Icons.paste_outlined,
+            color: Color(0xff80F98A),
+          )),
+          Text('کپی کردن', style: TextStyle(color: Colors.black, fontSize: 20)),
+        ],
+      ));
 }
