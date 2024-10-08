@@ -5,21 +5,12 @@ abstract class AuthEvent extends Equatable {
 }
 
 class AuthLoginEvent extends AuthEvent {
-  String phoneNumber;
-  String macAddress;
+  final String phoneNumber;
+  final String password;
+  final String macAddress;
 
-  AuthLoginEvent({required this.phoneNumber, required this.macAddress});
-
-  @override
-  List<Object?> get props => [];
-}
-
-class AuthRegisterEvent extends AuthEvent {
-  String phoneNumber;
-  String macAddress;
-
-  AuthRegisterEvent({required this.phoneNumber, required this.macAddress});
+  const AuthLoginEvent({required this.phoneNumber, required this.password, required this.macAddress});
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [phoneNumber, password, macAddress];
 }
