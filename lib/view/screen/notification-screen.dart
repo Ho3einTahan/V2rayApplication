@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../widget/custom-divider.dart';
 
@@ -8,6 +9,7 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(backgroundColor: const Color(0xff000046)),
       backgroundColor: const Color(0xff000046),
       body: SafeArea(
         child: Column(
@@ -18,7 +20,7 @@ class NotificationScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   customDivider(),
-                 const Text('اطلاع رسانی ...', style: TextStyle(color: Colors.white)),
+                  Text('اطلاع رسانی ...', style: context.textTheme.labelLarge!.copyWith(fontSize: 18)),
                   customDivider(),
                 ],
               ),
@@ -52,7 +54,7 @@ Widget _buildBanner() {
             Row(
               textDirection: TextDirection.rtl,
               children: [
-                const Text('تخفیف 10 درصدی اولین ورود'),
+                Text('تخفیف 10 درصدی اولین ورود', style: Get.context!.textTheme.labelLarge!.copyWith(fontSize: 18)),
                 const SizedBox(width: 10),
                 _buildPromoBadge(),
               ],
@@ -74,38 +76,30 @@ Widget _buildBanner() {
   );
 }
 
-
-
 Widget _buildPromoBadge() {
   return Container(
-    width: 41,
-    height: 20,
+    width: 45,
+    height: 26,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(18),
       gradient: const LinearGradient(colors: [Color(0xff03DAC5), Color(0xffFFCE22)]),
       border: Border.all(color: Colors.white),
     ),
-    child: const Center(child: Text('10%')),
+    child: Center(child: Text('10%', style: Get.context!.textTheme.labelLarge!.copyWith(fontSize: 17))),
   );
 }
 
 Widget _buildCopyButton() {
   return Container(
       width: 174,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: const Row(
+      height: 30,
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+      child: Row(
         textDirection: TextDirection.rtl,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Center(
-              child: Icon(
-            Icons.paste_outlined,
-            color: Color(0xff80F98A),
-          )),
-          Text('کپی کردن', style: TextStyle(color: Colors.black, fontSize: 20)),
+          const Center(child: Icon(Icons.file_copy_rounded, color: Color(0xff80F98A))),
+          Text('کپی کردن', style: Get.context!.textTheme.labelLarge!.copyWith(fontSize: 18, color: Colors.black)),
         ],
       ));
 }
