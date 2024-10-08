@@ -1,361 +1,144 @@
-import 'package:badges/badges.dart' as badges;
-import 'package:country_flags/country_flags.dart';
+import 'package:dart_ipify/dart_ipify.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'package:get/get.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
-import 'package:v2ray/core/class/model/MyPrefrences.dart';
+import 'package:v2ray/core/class/MyPrefrences.dart';
+import 'package:v2ray/view/screen/servers-screen.dart';
+import 'package:v2ray/view/screen/setting-screen.dart';
 
-import '../../bloc/auth/auth_bloc.dart';
-import '../../core/function/get-imei.dart';
-import '../widget/custom-gradient.dart';
+import '../../core/class/model/servers.dart';
+import '../widget/dots-loading.dart';
+import '../widget/v2ray-status-widget.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.serverConfig});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
-  final List<String> serverConfig;
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String selectedCountryNameAndImage = '';
+  String selectedServerAddress = '';
+  String userName = '';
+  String myIpAddress = "";
+  final Map<String, dynamic> arguments = Get.arguments;
+
+  var v2rayStatus = ValueNotifier<V2RayStatus>(V2RayStatus());
   late final FlutterV2ray flutterV2ray = FlutterV2ray(
-    onStatusChanged: (status) {
+    onStatusChanged: (status) async {
       v2rayStatus.value = status;
+      try {
+        myIpAddress = await Ipify.ipv4();
+      } catch (e) {
+        myIpAddress = 'Unable to retrieve IP address';
+      }
+      setState(() {});
     },
   );
 
-  var v2rayStatus = ValueNotifier<V2RayStatus>(V2RayStatus());
-  String link = '';
-
-  void onConnect() async {
-    V2RayURL parser = FlutterV2ray.parseFromURL(link);
+  void onConnect(String linkAddress) async {
+    V2RayURL parser = FlutterV2ray.parseFromURL(linkAddress);
+    List<String> appTunnels = await MyPreferences.getAppTunnels() ?? [];
     if (await flutterV2ray.requestPermission()) {
-      flutterV2ray.startV2Ray(
-        remark: parser.remark,
-        config: parser.getFullConfiguration(),
-        proxyOnly: false,
-        bypassSubnets: [],
-      );
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Permission Denied'),
-          ),
-        );
-      }
+      flutterV2ray.startV2Ray(remark: parser.remark, config: parser.getFullConfiguration(), proxyOnly: false, bypassSubnets: [], blockedApps: appTunnels);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Permission Denied')));
     }
   }
-
-  final List<Map<String, String>> _countryNames = [
-    {'am': 'ارمنستان'},
-    {'aw': 'آروبا'},
-    {'au': 'استرالیا'},
-    {'at': 'اتریش'},
-    {'az': 'جمهوری آذربایجان'},
-    {'bs': 'باهاما'},
-    {'bh': 'بحرین'},
-    {'bd': 'بنگلادش'},
-    {'bb': 'باربادوس'},
-    {'by': 'بلاروس'},
-    {'be': 'بلژیک'},
-    {'bz': 'بلیز'},
-    {'bj': 'بنین'},
-    {'bm': 'برمودا'},
-    {'bt': 'بوتان'},
-    {'bo': 'بولیوی'},
-    {'bq': 'بونیر، سنت اوستاتیوس و سبا'},
-    {'ba': 'بوسنی و هرزگوین'},
-    {'bw': 'بوتسوانا'},
-    {'bv': 'جزیره بووه'},
-    {'am': 'ارمنستان'},
-    {'aw': 'آروبا'},
-    {'au': 'استرالیا'},
-    {'at': 'اتریش'},
-    {'az': 'جمهوری آذربایجان'},
-    {'bs': 'باهاما'},
-    {'bh': 'بحرین'},
-    {'bd': 'بنگلادش'},
-    {'bb': 'باربادوس'},
-  ];
-  String selectedServerConfig = '';
 
   @override
   void initState() {
     super.initState();
-    checkUserAccess();
-    flutterV2ray.initializeV2Ray().then((value) async {
-      // initial server address
-      link = widget.serverConfig[0].trim();
-      selectedServerConfig = _countryNames[0].keys.first;
+    initialServer();
+    flutterV2ray.initializeV2Ray().then((value) {
       setState(() {});
     });
   }
 
-  Future<void> checkUserAccess() async {
-    String phoneNumber = await MyPreferences.readPhoneNumberUser();
-    String macAddress = await ImeiManager().getDeviceIMEINumber();
-    if (phoneNumber.isNotEmpty && widget.serverConfig.isEmpty) {
-      // start Event
-      BlocProvider.of<AuthBloc>(context).add(
-        AuthLoginEvent(
-          phoneNumber: phoneNumber,
-          macAddress: macAddress,
-        ),
-      ); // end of Event
-    }
+  Future<void> initialServer() async {
+    userName = await MyPreferences.getUserName() ?? '';
+    selectedCountryNameAndImage = await MyPreferences.getCountryNameAndImage() ?? '';
+    selectedServerAddress = await MyPreferences.getSelectedServerAddress() ?? '';
+    print(selectedServerAddress);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Servers> servers = arguments['servers'];
     return Scaffold(
+      backgroundColor: const Color(0xff000046),
+      appBar: AppBar(elevation: 0, backgroundColor: const Color(0xff000046)),
+      drawer: const SettingScreen(),
       body: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.bottomCenter, colors: [Color(0xff146B84), Color(0xff000046)]),
-          ),
-          child: ValueListenableBuilder(
-            valueListenable: v2rayStatus,
-            builder: (context, value, child) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 35),
-                  Container(
-                    width: double.infinity,
-                    height: 70,
-                    margin: const EdgeInsets.symmetric(horizontal: 31),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff1D192B),
-                      borderRadius: BorderRadius.circular(20),
-                      border: const GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(onPressed: () {}, icon: const Icon(Icons.clean_hands_sharp, size: 35, color: Colors.white)),
-                        Image.asset('images/profile.png'),
-                        const badges.Badge(
-                          badgeContent: Text('3'),
-                          child: Icon(Icons.notifications, size: 35),
-                        ),
-                      ],
-                    ),
+        child: ValueListenableBuilder(
+          valueListenable: v2rayStatus,
+          builder: (context, status, child) {
+            return Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 70,
+                  margin: const EdgeInsets.only(left: 31, right: 31, top: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff1D192B),
+                    borderRadius: BorderRadius.circular(20),
+                    border: const GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
                   ),
-                  const SizedBox(height: 32),
-
-                  Container(
-                    width: double.infinity,
-                    height: 100,
-                    margin: const EdgeInsets.symmetric(horizontal: 31),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: const GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
-                    ),
-                    child: Center(
-                        child: Text(
-                      '25 درصد تخفیف ویژه فقط برای امروز',
-                      style: TextStyle(color: Colors.black, fontSize: 20),
-                    )),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      Text('سلام', style: context.textTheme.headlineLarge!.copyWith(fontSize: 20, color: const Color(0xffB88400))),
+                      const SizedBox(width: 7),
+                      Text(userName, style: context.textTheme.headlineLarge!.copyWith(fontSize: 20)),
+                    ],
                   ),
-                  _buildConnectStatus(),
-                  // const SizedBox(height: 20),
-                  // const SizedBox(height: 20),
-                  // _buildChooseSeverConfig(),
-                  // const SizedBox(height: 20),
-
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     if (value.state == 'CONNECTED') {
-                  //       flutterV2ray.stopV2Ray();
-                  //     } else {
-                  //       onConnect();
-                  //     }
-                  //     setState(() {});
-                  //   },
-                  //   child: Container(
-                  //     width: 150,
-                  //     height: 150,
-                  //     decoration: BoxDecoration(
-                  //         border: Border.all(
-                  //           color: const Color(0xff3D83FF),
-                  //           width: 5,
-                  //         ),
-                  //         borderRadius: BorderRadius.circular(75)),
-                  //     child: Center(child: value.state == 'CONNECTED' ? Image.asset('images/tap-disconnect.png') : Image.asset('images/tap-connect.png')),
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 100),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     const Text('Status : ',
-                  //         style: TextStyle(
-                  //           fontSize: 18,
-                  //           fontWeight: FontWeight.w800,
-                  //         )),
-                  //     Text(
-                  //       ' ${v2rayStatus.value.state} ',
-                  //       style: TextStyle(
-                  //         color: v2rayStatus.value.state == 'CONNECTED' ? Colors.green : Colors.red,
-                  //         fontSize: 18,
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 32),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     const Text('Time : '),
-                  //     const SizedBox(width: 10), // Adding vertical space
-                  //     Text(value.duration),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 24),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     const Text('Speed:'),
-                  //     const SizedBox(width: 10),
-                  //     Text(value.uploadSpeed),
-                  //     const Text('↑'),
-                  //     const SizedBox(width: 10),
-                  //     Text(value.downloadSpeed),
-                  //     const Text('↓'),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 24),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     const Text('Traffic:'),
-                  //     const SizedBox(width: 10),
-                  //     Text(value.upload),
-                  //     const Text('↑'),
-                  //     const SizedBox(width: 10),
-                  //     Text(value.download),
-                  //     const Text('↓'),
-                  //   ],
-                  // ),
-                  // // const Spacer(),
-                  // _buildChooseSeverConfig(widget.serverConfig),
-                ],
-              );
-            },
-          ),
+                ),
+                const SizedBox(height: 65),
+                _buildChooseCountry(servers),
+                _buildConnectStatus(status),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildChooseSeverConfig() {
-    return InkWell(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          builder: (context) => DraggableScrollableSheet(
-            initialChildSize: 0.5,
-            maxChildSize: 0.7,
-            builder: (context, scrollController) => Container(
-              decoration: const BoxDecoration(
-                color: Colors.black45,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Column(
-                children: [
-                  if (widget.serverConfig.isEmpty) ...{
-                    const Center(
-                        child: Padding(
-                      padding: EdgeInsets.only(top: 35),
-                      child: Text('سروری وجود ندارد',
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w800,
-                          )),
-                    )),
-                  },
-                  Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      cacheExtent: 20,
-                      itemCount: widget.serverConfig.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          height: 80,
-                          decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: InkWell(
-                              onTap: () {
-                                link = widget.serverConfig[index].trim();
-                                selectedServerConfig = _countryNames[index].keys.first;
-                                setState(() {});
-                                Navigator.pop(context);
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  CountryFlag.fromCountryCode(
-                                    _countryNames[index].keys.first,
-                                    height: 48,
-                                    width: 62,
-                                    borderRadius: 5,
-                                  ),
-                                  Text(
-                                    _countryNames[index].values.first,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+  Widget _buildChooseCountry(List<Servers> servers) {
+    return GestureDetector(
+      onTap: () async {
+        List<String>? callback = await Navigator.of(context).push(MaterialPageRoute(builder: (context) => ServersScreen(servers: servers)));
+        if (callback != null && callback.isNotEmpty) {
+          if (callback[0] != selectedCountryNameAndImage) {
+            selectedCountryNameAndImage = callback[0];
+            selectedServerAddress = callback[1];
+            MyPreferences.setSelectedServerAddress(serverAddress: selectedServerAddress);
+            MyPreferences.setCountryNameAndImage(countryNameAndImage: selectedCountryNameAndImage);
+
+            setState(() {});
+          }
+        }
       },
       child: Container(
         height: 70,
         margin: const EdgeInsets.symmetric(horizontal: 25),
-        decoration: BoxDecoration(
-          color: const Color(0xff1D2031),
-          borderRadius: BorderRadius.circular(34),
-          border: Border.all(
-            color: const Color(0xff3D83FF),
-            width: 2,
-          ),
-        ),
+        decoration: BoxDecoration(color: const Color(0xff353351).withOpacity(0.7), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.transparent)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CountryFlag.fromCountryCode(
-                selectedServerConfig,
-                height: 48,
-                width: 62,
-                borderRadius: 5,
-              ),
-              const SizedBox(width: 10),
+              Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 10, right: 12),
+                  child: selectedCountryNameAndImage.isEmpty ? const Icon(Icons.question_mark_outlined) : Image.asset('images/${selectedCountryNameAndImage.toLowerCase()}.png')),
+              Text(selectedCountryNameAndImage.isEmpty ? 'لطفا یک سرور را انتخاب کنید' : selectedCountryNameAndImage,
+                  style: context.textTheme.displaySmall!.copyWith(fontSize: 20, fontWeight: FontWeight.w800)),
+              const Spacer(),
               const Icon(CupertinoIcons.right_chevron),
             ],
           ),
@@ -364,25 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildConnectButton() {
-    return Column(
-      children: [
-        const SizedBox(height: 70),
-        Container(
-          width: 175,
-          height: 175,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(0xff1D192B),
-            border: GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
-          ),
-          child: const Center(child: Icon(Icons.power_settings_new_rounded, size: 70)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConnectStatus() {
+  Widget _buildConnectStatus(V2RayStatus status) {
     return Container(
       width: 360,
       height: 350,
@@ -390,34 +155,53 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.only(right: 32),
       decoration: const BoxDecoration(
         color: Color(0xff1D192B),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(71),
-          bottomRight: Radius.circular(71),
-        ),
+        border: GradientBoxBorder(width: 3, gradient: LinearGradient(colors: [Color(0xff23C95B), Color(0xff6F34FE)])),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(71), bottomRight: Radius.circular(71)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        textDirection: TextDirection.rtl,
         children: [
-          Center(
-            child: CustomGradient(
-              firstColor: const Color(0xff11998E),
-              secondColor: const Color(0xff38EF7D),
-              child: const Text('CONNECTED', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            ),
+          Padding(padding: const EdgeInsets.only(left: 24), child: buildStatusText(status.state)),
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Text('آدرس آیپی  :   ', textDirection: TextDirection.rtl, style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+              myIpAddress.isEmpty ? LoadingDots() : Text(myIpAddress, style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: myIpAddress.length > 10 ? 15 : 20, color: Colors.white)),
+              const SizedBox(width: 3),
+              const Icon(Icons.flag, color: Colors.black),
+            ],
           ),
-          Text('آدرس آیپی : 192.168.1.100'),
-          Text('سرعت دانلود : 1300MB'),
-          Text('سرعت آپلود : 1300MB'),
-          Text('حجم مصرف شده : 13565923015MB'),
-          Text('زمان : 13:20:12'),
-          Center(
-              child: CustomGradient(
-            firstColor: const Color(0xff38EF7D),
-            secondColor: const Color(0xff11998E),
-            child: const Icon(Icons.power_settings_new_rounded, size: 70),
-          )),
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Text('سرعت دانلود  :  ', textDirection: TextDirection.rtl, style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+              Text(status.downloadSpeed.toString(), style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+            ],
+          ),
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Text('سرعت آپلود  :  ', textDirection: TextDirection.rtl, style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+              Text(status.uploadSpeed.toString(), style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+            ],
+          ),
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Text('زمان  :  ', textDirection: TextDirection.rtl, style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+              Text(status.duration.toString(), style: Get.context!.textTheme.bodyMedium!.copyWith(fontSize: 20, color: Colors.white)),
+            ],
+          ),
+          GestureDetector(
+              onTap: () {
+                if (status.state == 'CONNECTED') {
+                  flutterV2ray.stopV2Ray();
+                } else {
+                  onConnect(selectedServerAddress);
+                }
+                myIpAddress = '';
+              },
+              child: buildStatusButton(status.state)),
         ],
       ),
     );
