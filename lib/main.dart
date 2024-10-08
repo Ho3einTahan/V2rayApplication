@@ -1,22 +1,30 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 import 'package:v2ray/bloc/auth/auth_bloc.dart';
 import 'package:v2ray/bloc/vpn/vpn_bloc.dart';
 import 'package:v2ray/core/constants/routes.dart';
 import 'package:v2ray/utils/app-them.dart';
 import 'package:v2ray/view/screen/login-screen.dart';
+import 'package:v2ray/view/screen/no-internet-screen.dart';
 
+import 'core/class/MyPrefrences.dart';
+import 'core/class/get-imei.dart';
 import 'di/di.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  getItInit();
+  await getItInit();
+
   runApp(
-    MultiBlocProvider(providers: [
-      BlocProvider<AuthBloc>(create: (context) => AuthBloc()),
-      BlocProvider<VpnBloc>(create: (context) => VpnBloc()),
-    ], child: Application()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(create: (context) => AuthBloc()),
+        BlocProvider<VpnBloc>(create: (context) => VpnBloc()),
+      ],
+      child: Application(),
+    ),
   );
 }
 
@@ -26,11 +34,50 @@ class Application extends StatefulWidget {
 }
 
 class _ApplicationState extends State<Application> {
-  int _selectedIndex = 0;
+  bool isConnected = true;
+  String userPhone = '';
+  String userPass = '';
+  String deviceMacAddress = '';
+  bool isLoading = true;
+  final Connectivity _connectivity = Connectivity();
 
-  void _onItemTapped(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _checkInternetConnection();
+    _initializeUserCredentials();
+    _monitorInternetConnection();
+  }
+
+  Future<void> _initializeUserCredentials() async {
+    try {
+      userPhone = await MyPreferences.getUserPhoneNumber() ?? '';
+      userPass = await MyPreferences.getUserPassword() ?? '';
+      deviceMacAddress = await ImeiManager.getDeviceIMEINumber();
+    } catch (e) {
+      print('Error loading user credentials: $e');
+    }
     setState(() {
-      _selectedIndex = index;
+      isLoading = false;
+    });
+
+    if (userPhone.isNotEmpty && userPass.isNotEmpty) {
+      BlocProvider.of<AuthBloc>(context).add(AuthLoginEvent(phoneNumber: userPhone, password: userPass, macAddress: deviceMacAddress));
+    }
+  }
+
+  Future<void> _checkInternetConnection() async {
+    ConnectivityResult result = await _connectivity.checkConnectivity();
+    setState(() {
+      isConnected = (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi);
+    });
+  }
+
+  void _monitorInternetConnection() {
+    _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      setState(() {
+        isConnected = (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi);
+      });
     });
   }
 
@@ -40,51 +87,24 @@ class _ApplicationState extends State<Application> {
       debugShowCheckedModeBanner: false,
       getPages: AppRoutes.getPages,
       theme: AppTheme(),
-      home: Scaffold(
-        backgroundColor: const Color(0xff000046),
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            // CountryScreen(),
-            // HomeScreen(serverConfig: []),
-            // SettingScreen(),`
-            // SplitTunnelingScreen(),
-            // ProfileScreen(),
-            LoginScreen(),
-            // NotificationScreen(),
-            // BuyAccountScreen(),
-          ],
-        ),
-        // bottomNavigationBar: Container(
-        //   alignment: Alignment.bottomCenter,
-        //   height: 75,+
+      home: _buildHomeScreen(userPhone, userPass, deviceMacAddress),
+    );
+  }
 
-        //   decoration: const BoxDecoration(
-        //     color: Color(0xff1D192B),
-        //     borderRadius: BorderRadius.only(topLeft: Radius.circular(45), topRight: Radius.circular(45)),
-        //     border: GradientBoxBorder(gradient: LinearGradient(begin: Alignment.topRight, colors: [Color(0xff23C95B), Color(0xff6F34FE)]), width: 3.5),
-        //   ),
-        //   child: Center(
-        //     child: ClipRRect(
-        //       borderRadius: const BorderRadius.only(topLeft: Radius.circular(45), topRight: Radius.circular(45)),
-        //       child: BottomAppBar(
-        //         shape: const CircularNotchedRectangle(),
-        //         notchMargin: 6.0,
-        //         color: const Color(0xff1D192B),
-        //         child: Row(
-        //           mainAxisSize: MainAxisSize.max,
-        //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        //           children: <Widget>[
-        //             IconButton(icon: const Icon(Icons.home, size: 32), onPressed: () => _onItemTapped(0)),
-        //             IconButton(icon: const Icon(Icons.person, size: 32), onPressed: () => _onItemTapped(1)),
-        //             IconButton(icon: const Icon(Icons.settings, size: 32), onPressed: () => _onItemTapped(2)),
-        //           ],
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ),
-      ),
+  Widget _buildHomeScreen(String userPhone, String userPass, String macAddress) {
+    return FutureBuilder<bool>(
+      future: MyPreferences.getIsUserLoggedIn(),
+      builder: (context, snapshot) {
+        if (!isConnected) {
+          return const NoInternetScreen();
+        }
+
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return LoginScreen(userPhone: userPhone, userPassword: userPass, macAddress: macAddress);
+      },
     );
   }
 }
